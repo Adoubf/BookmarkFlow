@@ -11,6 +11,14 @@
 
 ---
 
+## 🚀 一键部署到 Vercel
+
+点击下方按钮，立即将本项目部署到 Vercel：
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Adoubf/BookmarkFlow&project-name=bookmark-flow&repository-name=BookmarkFlow)
+
+---
+
 ## ✨ 核心功能特性
 
 ### 📥 智能书签导入系统

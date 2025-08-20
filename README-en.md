@@ -11,6 +11,14 @@ We're excited to announce the official release of BookmarkFlow v0.1.0! This is a
 
 ---
 
+## 🚀 One-click deployment to Vercel
+
+Click the button below to Fork/Clone this project and automatically deploy it to Vercel:
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Adoubf/BookmarkFlow&project-name=bookmark-flow&repository-name=BookmarkFlow)
+
+---
+
 ## ✨ Core Features
 
 ### 📥 Intelligent Bookmark Import System
