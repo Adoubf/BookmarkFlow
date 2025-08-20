@@ -123,10 +123,6 @@ Thanks to all users who provided feedback and suggestions during the development
 
 ---
 
-**Experience BookmarkFlow today and begin your modern bookmark management journey!**
-
----
-
 ## 📄 License
 
 BookmarkFlow is an open-source project, licensed under the [MIT License](LICENSE).
