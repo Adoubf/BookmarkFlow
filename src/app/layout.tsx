@@ -15,6 +15,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "BookmarkFlow - Modern Bookmark Manager",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon-64.ico"
+  },
   description: "Import, organize, and navigate your bookmarks with a cutting-edge interface",
 };
 
