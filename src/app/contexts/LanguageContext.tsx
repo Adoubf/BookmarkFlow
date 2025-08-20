@@ -91,10 +91,10 @@ const translations: TranslationMap = {
     "footer.autoDedupe": "自动去重导入",
     "footer.privacy": "本地隐私保护",
     "footer.supportedBrowsers": "支持的浏览器",
-    "footer.copyright": "© {year} BookmarkFlow. 保留所有权利。",
+    "footer.copyright": "© {year} Coralera. 保留所有权利。",
     "footer.builtWith": "使用 Next.js & Tailwind CSS 构建",
     "footer.madeWith": "用",
-    "footer.byAuthor": "制作 by Cascade AI",
+    "footer.byAuthor": "制作 by Haoyue",
   },
   en: {
     // Navigation
@@ -181,10 +181,10 @@ const translations: TranslationMap = {
     "footer.autoDedupe": "Auto Deduplication",
     "footer.privacy": "Local Privacy Protection",
     "footer.supportedBrowsers": "Supported Browsers",
-    "footer.copyright": "© {year} BookmarkFlow. All rights reserved.",
+    "footer.copyright": "© {year} Coralera. All rights reserved.",
     "footer.builtWith": "Built with Next.js & Tailwind CSS",
     "footer.madeWith": "Made with",
-    "footer.byAuthor": "by Cascade AI",
+    "footer.byAuthor": "by Haoyue",
   },
 };
 
