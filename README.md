@@ -117,13 +117,6 @@
 
 ---
 
-**立即体验 BookmarkFlow，开启您的现代化书签管理之旅！**
-
-*BookmarkFlow 团队*  
-*2025年1月20日*
-
----
-
 ## 📄 许可
 
 BookmarkFlow 是一个开源项目，遵循 [MIT License](LICENSE) 许可证。
