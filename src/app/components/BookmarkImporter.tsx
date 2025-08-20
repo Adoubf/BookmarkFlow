@@ -254,7 +254,7 @@ export default function BookmarkImporter({
           />
         </svg>
         <span className="text-sm font-medium whitespace-nowrap">
-          {isProcessing ? "处理中..." : "导入更多"}
+          {isProcessing ? t('importer.processing2') : t('importer.importMore')}
         </span>
         <input
           ref={fileInputRef}

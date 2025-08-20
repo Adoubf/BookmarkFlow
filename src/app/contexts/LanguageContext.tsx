@@ -37,14 +37,15 @@ const translations: TranslationMap = {
     "features.lightningFastDesc": "导航数千个书签，瞬间加载和流畅动画",
 
     // Bookmark Importer
-    "importer.title": "导入书签",
-    "importer.processing": "处理书签...",
-    "importer.dragDrop": "拖放你的书签文件到这里，或者点击浏览",
-    "importer.duplicateFilter": "重复项将被自动过滤",
-    "importer.chooseFile": "选择文件",
-    "importer.processing2": "处理中...",
-    "importer.supportedFormats": "支持的格式：HTML (.html) 和 JSON (.json)",
-    "importer.privacy": "你的书签在本地处理，永远不会发送到任何服务器",
+    'importer.title': '导入书签',
+    'importer.processing': '处理书签...',
+    'importer.dragDrop': '拖放你的书签文件到这里，或者点击浏览',
+    'importer.duplicateFilter': '重复项将被自动过滤',
+    'importer.chooseFile': '选择文件',
+    'importer.processing2': '处理中...',
+    'importer.importMore': '导入更多',
+    'importer.supportedFormats': '支持的格式：HTML (.html) 和 JSON (.json)',
+    'importer.privacy': '你的书签在本地处理，永远不会发送到任何服务器',
 
     // Search
     "search.placeholder": "搜索书签...",
@@ -122,17 +123,15 @@ const translations: TranslationMap = {
       "Navigate thousands of bookmarks with instant loading and smooth animations",
 
     // Bookmark Importer
-    "importer.title": "Import Your Bookmarks",
-    "importer.processing": "Processing Bookmarks...",
-    "importer.dragDrop":
-      "Drag and drop your bookmark file here, or click to browse",
-    "importer.duplicateFilter": "Duplicates will be automatically filtered out",
-    "importer.chooseFile": "Choose File",
-    "importer.processing2": "Processing...",
-    "importer.supportedFormats":
-      "Supported formats: HTML (.html) and JSON (.json)",
-    "importer.privacy":
-      "Your bookmarks are processed locally and never sent to any server",
+    'importer.title': 'Import Your Bookmarks',
+    'importer.processing': 'Processing Bookmarks...',
+    'importer.dragDrop': 'Drag and drop your bookmark file here, or click to browse',
+    'importer.duplicateFilter': 'Duplicates will be automatically filtered out',
+    'importer.chooseFile': 'Choose File',
+    'importer.processing2': 'Processing...',
+    'importer.importMore': 'Import More',
+    'importer.supportedFormats': 'Supported formats: HTML (.html) and JSON (.json)',
+    'importer.privacy': 'Your bookmarks are processed locally and never sent to any server',
 
     // Search
     "search.placeholder": "Search bookmarks...",

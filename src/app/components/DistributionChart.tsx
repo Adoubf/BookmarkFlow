@@ -73,6 +73,9 @@ export default function DistributionChart({ bookmarks }: DistributionChartProps)
       },
       toolbox: {
         show: true,
+        orient: 'vertical',
+        right: '5%',
+        top: '15%',
         feature: {
           saveAsImage: {
             show: true,
