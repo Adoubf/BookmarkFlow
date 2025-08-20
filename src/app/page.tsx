@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react";
 import BookmarkImporter from "./components/BookmarkImporter";
 import TopNavigation from "./components/TopNavigation";
-import CategorySidebar from "./components/CategorySidebar";
+// import CategorySidebar from "./components/CategorySidebar"; // Removed
 import Footer from "./components/Footer";
 import DistributionChart from "./components/DistributionChart";
 import ScrollToTop from "./components/ScrollToTop";
 import { ConfirmModal } from "./components/Modal";
+import UploadModal from "./components/UploadModal";
+import SettingsModal from "./components/SettingsModal";
 import { useLanguage } from "./contexts/LanguageContext";
 
 // Dynamic imports for better performance
@@ -38,8 +40,11 @@ export default function Home() {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState<'home' | 'bookmarks' | 'distribution'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'bookmarks' | 'chart'>('home');
   const [viewMode, setViewMode] = useState<'list' | 'grid' | 'compact'>('grid');
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showClearModal, setShowClearModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
 
   // Load bookmarks from localStorage on component mount
   useEffect(() => {
@@ -77,18 +82,45 @@ export default function Home() {
   }, [bookmarks, viewMode]);
 
 
+  // Helper function to clean folder paths
+  const cleanFolderPath = (path: string): string => {
+    if (!path) return '';
+    
+    const segments = path.split('/').filter(Boolean);
+    const uniqueSegments: string[] = [];
+    
+    for (const segment of segments) {
+      if (uniqueSegments.length === 0 || uniqueSegments[uniqueSegments.length - 1] !== segment) {
+        if (!['书签栏', 'Bookmarks Bar', 'Bookmarks', '收藏夹'].includes(segment)) {
+          uniqueSegments.push(segment);
+        }
+      }
+    }
+    
+    return uniqueSegments.join('/');
+  };
+
   const filteredBookmarks = bookmarks.filter(bookmark => {
     const matchesSearch = bookmark.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          bookmark.url.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFolder = !selectedFolder || bookmark.folder === selectedFolder;
+    
+    // Clean both the bookmark folder and selected folder for comparison
+    const cleanBookmarkFolder = cleanFolderPath(bookmark.folder || '');
+    const cleanSelectedFolder = selectedFolder ? cleanFolderPath(selectedFolder) : null;
+    
+    // Match folder: exact match or bookmark folder starts with selected folder (for sub-folders)
+    const matchesFolder = !cleanSelectedFolder || 
+                         cleanBookmarkFolder === cleanSelectedFolder ||
+                         cleanBookmarkFolder.startsWith(cleanSelectedFolder + '/');
+    
     return matchesSearch && matchesFolder;
   });
 
   const folders = Array.from(new Set(bookmarks.map(b => b.folder).filter(Boolean))) as string[];
-  const bookmarkCounts = folders.reduce((acc, folder) => {
-    acc[folder] = bookmarks.filter(b => b.folder === folder).length;
-    return acc;
-  }, {} as Record<string, number>);
+  // const bookmarkCounts = folders.reduce((acc, folder) => {
+  //   acc[folder] = bookmarks.filter(b => b.folder === folder).length;
+  //   return acc;
+  // }, {} as Record<string, number>); // Reserved for future use
 
   // Auto-switch to bookmarks page when bookmarks are imported
   const handleBookmarksImported = (importedBookmarks: Bookmark[]) => {
@@ -98,23 +130,109 @@ export default function Home() {
     }
   };
 
-  // Clear all bookmark data
-  const [showClearModal, setShowClearModal] = useState(false);
-  
-  const handleClearData = () => {
-    setShowClearModal(true);
+  // Handle file upload from modal
+  const handleFileUpload = async (file: File) => {
+    try {
+      const text = await file.text();
+      let parsedBookmarks: Bookmark[] = [];
+      
+      if (file.name.endsWith('.html')) {
+        // Parse HTML bookmark file
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(text, 'text/html');
+        const links = doc.querySelectorAll('a[href]');
+        
+        parsedBookmarks = Array.from(links).map((link, index) => {
+          const href = link.getAttribute('href') || '';
+          const title = link.textContent || href;
+          
+          // Build folder path from nested structure
+          let folderPath = 'Imported';
+          let currentElement = link.parentElement;
+          const folderParts: string[] = [];
+          
+          // Traverse up to find folder hierarchy
+          while (currentElement) {
+            // Look for H3 elements that represent folder names
+            const h3Elements = currentElement.querySelectorAll('h3');
+            h3Elements.forEach(h3 => {
+              if (h3.textContent && h3.textContent.trim()) {
+                const folderName = h3.textContent.trim();
+                // Skip common root folder names
+                if (!['书签栏', 'Bookmarks Bar', 'Bookmarks', '收藏夹'].includes(folderName)) {
+                  if (!folderParts.includes(folderName)) {
+                    folderParts.unshift(folderName);
+                  }
+                }
+              }
+            });
+            currentElement = currentElement.parentElement;
+          }
+          
+          if (folderParts.length > 0) {
+            folderPath = folderParts.join('/');
+          }
+          
+          return {
+            id: `imported-${Date.now()}-${index}`,
+            title: title.trim(),
+            url: href,
+            folder: folderPath,
+            dateAdded: new Date()
+          };
+        }).filter(bookmark => bookmark.url && bookmark.url.startsWith('http'));
+      } else if (file.name.endsWith('.json')) {
+        // Parse JSON bookmark file
+        const jsonData = JSON.parse(text);
+        if (Array.isArray(jsonData)) {
+          parsedBookmarks = jsonData.map((item, index) => ({
+            id: item.id || `imported-${Date.now()}-${index}`,
+            title: item.title || item.name || item.url,
+            url: item.url || item.href,
+            folder: item.folder || item.category || 'Imported',
+            dateAdded: item.dateAdded ? new Date(item.dateAdded) : new Date()
+          })).filter(bookmark => bookmark.url);
+        }
+      }
+      
+      if (parsedBookmarks.length > 0) {
+        // Remove duplicates
+        const existingUrls = new Set(bookmarks.map(b => b.url));
+        const newBookmarks = parsedBookmarks.filter(b => !existingUrls.has(b.url));
+        
+        if (newBookmarks.length > 0) {
+          const updatedBookmarks = [...bookmarks, ...newBookmarks];
+          setBookmarks(updatedBookmarks);
+          
+          // Save to localStorage
+          const dataToSave = {
+            bookmarks: updatedBookmarks,
+            viewMode: viewMode,
+            timestamp: Date.now()
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+          
+          // Switch to bookmarks page
+          setCurrentPage('bookmarks');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to parse bookmark file:', error);
+    }
   };
-  
+
+  // Clear all bookmark data
   const confirmClearData = () => {
     setBookmarks([]);
-    setSearchQuery("");
-    setSelectedFolder(null);
+    localStorage.removeItem(STORAGE_KEY);
     setCurrentPage('home');
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch (error) {
-      console.error('Failed to clear localStorage:', error);
-    }
+    setSelectedFolder(null);
+    setSearchQuery('');
+  };
+
+  // Delete a single bookmark
+  const handleDeleteBookmark = (id: string) => {
+    setBookmarks(prev => prev.filter(bookmark => bookmark.id !== id));
   };
 
   return (
@@ -133,28 +251,20 @@ export default function Home() {
 
       <div className="relative z-10 flex flex-col min-h-screen">
         {/* Top Navigation */}
-        <TopNavigation 
+        <TopNavigation
           currentPage={currentPage}
           onPageChange={setCurrentPage}
           bookmarkCount={bookmarks.length}
-          onClearData={handleClearData}
+          onUploadClick={() => setShowUploadModal(true)}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          onSettingsClick={() => setShowSettingsModal(true)}
         />
 
-        {/* Category Sidebar - Only show on bookmarks page */}
-        {currentPage === 'bookmarks' && bookmarks.length > 0 && (
-          <CategorySidebar
-            folders={folders}
-            selectedFolder={selectedFolder}
-            onFolderChange={setSelectedFolder}
-            bookmarkCounts={bookmarkCounts}
-          />
-        )}
-
         {/* Main Content */}
-        <main className={`flex-1 transition-all duration-300 ${
-          currentPage === 'bookmarks' && bookmarks.length > 0 ? 'ml-64' : ''
-        } pt-20 px-6 pb-6`}>
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-1 pt-16 sm:pt-20 overflow-hidden">
           {currentPage === 'home' || bookmarks.length === 0 ? (
             /* Welcome Screen */
             <div className="text-center py-20">
@@ -207,39 +317,135 @@ export default function Home() {
                 </div>
               </div>
             </div>
-          ) : currentPage === 'distribution' ? (
+          ) : currentPage === 'bookmarks' ? (
+            /* Bookmark Management Interface */
+            <div className="relative">
+              {/* Main Content without sidebar */}
+              <div className="min-h-screen flex flex-col">
+                <div className="flex-1 p-6">
+                  {/* Container with max width */}
+                  <div className="max-w-[1200px] mx-auto">
+                    {/* Top Bar with Search, Stats, and View Controls */}
+                    <div className="flex items-start justify-between gap-4 mb-6">
+                    <SearchBar
+                      folders={folders}
+                      selectedFolder={selectedFolder}
+                      onFolderChange={setSelectedFolder}
+                      searchQuery={searchQuery}
+                    />
+                    
+                    {/* Bookmark Count and View Controls */}
+                    <div className="flex items-center gap-4 flex-shrink-0">
+                      {/* Bookmark Count */}
+                      <div className="text-sm text-foreground/60">
+                        <span className="px-3 py-2 bg-surface/50 border border-border/30 rounded-lg">
+                          {filteredBookmarks.length} {t('nav.bookmarks')}
+                        </span>
+                      </div>
+                      
+                      {/* View Mode Toggle */}
+                      <div className="flex items-center bg-surface/50 border border-border/30 rounded-lg p-1">
+                        <button
+                          onClick={() => setViewMode('grid')}
+                          className={`p-2 rounded transition-all duration-200 ${
+                            viewMode === 'grid'
+                              ? 'bg-primary text-white shadow-md'
+                              : 'text-foreground/60 hover:text-foreground hover:bg-surface/70'
+                          }`}
+                          title={t('view.grid')}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => setViewMode('list')}
+                          className={`p-2 rounded transition-all duration-200 ${
+                            viewMode === 'list'
+                              ? 'bg-primary text-white shadow-md'
+                              : 'text-foreground/60 hover:text-foreground hover:bg-surface/70'
+                          }`}
+                          title={t('view.list')}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => setViewMode('compact')}
+                          className={`p-2 rounded transition-all duration-200 ${
+                            viewMode === 'compact'
+                              ? 'bg-primary text-white shadow-md'
+                              : 'text-foreground/60 hover:text-foreground hover:bg-surface/70'
+                          }`}
+                          title={t('view.compact')}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                    <div>
+                      <BookmarkGrid
+                        bookmarks={filteredBookmarks}
+                        viewMode={viewMode}
+                        onDeleteBookmark={handleDeleteBookmark}
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Footer for bookmarks page */}
+                <div className="mt-auto">
+                  <Footer />
+                </div>
+              </div>
+            </div>
+          ) : currentPage === 'chart' ? (
             /* Distribution Chart */
-            <div className="space-y-6">
-              <DistributionChart bookmarks={bookmarks} />
+            <div className="flex flex-col h-full">
+              <div className="flex-1 overflow-hidden">
+                <DistributionChart bookmarks={bookmarks} />
+              </div>
+              <div className="flex-shrink-0">
+                <Footer />
+              </div>
             </div>
           ) : (
-            /* Bookmark Management Interface */
-            <div className="space-y-6">
-              <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-                <SearchBar 
-                  searchQuery={searchQuery} 
-                  onSearchChange={setSearchQuery}
-                  folders={folders}
-                  selectedFolder={selectedFolder}
-                  onFolderChange={setSelectedFolder}
-                />
-                <BookmarkImporter onBookmarksImported={handleBookmarksImported} existingBookmarks={bookmarks} compact />
-              </div>
-              
-              <BookmarkGrid bookmarks={filteredBookmarks} viewMode={viewMode} onViewModeChange={setViewMode} />
-            </div>
+            /* Default fallback */
+            <div></div>
           )}
-          </div>
         </main>
 
-        {/* Footer - Sticky to bottom */}
-        <div className="mt-auto">
-          <Footer />
-        </div>
+        {/* Footer - Only for home page */}
+        {currentPage === 'home' && (
+          <div className="mt-auto">
+            <Footer />
+          </div>
+        )}
 
         {/* Scroll to Top Button */}
         <ScrollToTop />
       </div>
+      
+      {/* Upload Modal */}
+      <UploadModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onFileSelect={handleFileUpload}
+      />
+      
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        onClearData={() => setShowClearModal(true)}
+        onImportData={() => setShowUploadModal(true)}
+        bookmarkCount={bookmarks.length}
+      />
       
       {/* Clear Data Confirmation Modal */}
       <ConfirmModal

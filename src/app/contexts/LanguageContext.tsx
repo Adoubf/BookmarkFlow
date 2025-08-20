@@ -16,12 +16,17 @@ type TranslationMap = Record<Language, Messages>;
 const translations: TranslationMap = {
   zh: {
     // Navigation
-    "nav.bookmarkFlow": "BookmarkFlow",
-    "nav.home": "首页",
-    "nav.bookmarks": "书签",
-    "nav.distribution": "分布图",
-    "nav.clearData": "清除数据",
-    "nav.bookmarkCount": "个书签",
+    'nav.bookmarkFlow': 'BookmarkFlow',
+    'nav.home': '首页',
+    'nav.bookmarks': '书签',
+    'nav.distribution': '分布图',
+    'nav.clearData': '清除数据',
+    'nav.settings': '设置',
+    'nav.bookmarkCount': '个书签',
+    'nav.categoryNavigation': '分类导航',
+    'nav.noCategories': '暂无分类',
+    'nav.noCategoriesDesc': '导入书签后会自动显示分类',
+    'nav.totalCategories': '共 {count} 个分类',
 
     // Home page
     "home.title": "导入书签",
@@ -52,6 +57,10 @@ const translations: TranslationMap = {
     "search.allFolders": "所有的分类",
     "search.filteredResults": "过滤后的结果",
     "search.allBookmarks": "所有的书签",
+    
+    // Sidebar
+    "sidebar.categories": "分类导航",
+    "sidebar.allBookmarks": "所有书签",
 
     // Messages
     "message.parseError": "解析书签文件失败，请确保文件是有效的书签导出文件。",
@@ -63,9 +72,26 @@ const translations: TranslationMap = {
       "确定要清除所有书签数据吗？此操作不可撤销。",
 
     // Buttons
-    "button.confirm": "确认",
-    "button.cancel": "取消",
-    "button.ok": "确定",
+    'button.confirm': '确认',
+    'button.cancel': '取消',
+    'button.ok': '确定',
+    'button.chooseFile': '选择文件',
+    
+    // Upload Modal
+    'upload.title': '上传书签文件',
+    'upload.description': '请上传您的书签文件来开始使用书签管理功能',
+    'upload.supportedFormats': '支持 HTML 和 JSON 格式的书签文件',
+
+    // Settings Modal
+    'settings.title': '设置',
+    'settings.statistics': '统计信息',
+    'settings.totalBookmarks': '总书签数',
+    'settings.actions': '操作',
+    'settings.importData': '导入数据',
+    'settings.importDataDesc': '导入新的书签文件',
+    'settings.clearData': '清除数据',
+    'settings.clearDataDesc': '删除所有书签数据',
+    'settings.version': '版本',
 
     // View modes
     "view.list": "列表",
@@ -75,7 +101,8 @@ const translations: TranslationMap = {
     // Chart
     "chart.bookmarkDistribution": "书签分布图",
     "chart.bookmarkCount": "书签数量",
-    "chart.saveImage": "保存图片",
+    'chart.saveImage': '保存图片',
+    'chart.save': '保存',
     "chart.noData": "暂无数据",
     "chart.noDataDesc": "导入一些书签后，这里将显示美丽的分布图表",
     "chart.totalBookmarks": "总书签数",
@@ -98,12 +125,17 @@ const translations: TranslationMap = {
   },
   en: {
     // Navigation
-    "nav.bookmarkFlow": "BookmarkFlow",
-    "nav.home": "Home",
-    "nav.bookmarks": "Bookmarks",
-    "nav.distribution": "Distribution",
-    "nav.clearData": "Clear Data",
-    "nav.bookmarkCount": " bookmarks",
+    'nav.bookmarkFlow': 'BookmarkFlow',
+    'nav.home': 'Home',
+    'nav.bookmarks': 'Bookmarks',
+    'nav.distribution': 'Distribution',
+    'nav.clearData': 'Clear Data',
+    'nav.settings': 'Settings',
+    'nav.bookmarkCount': ' bookmarks',
+    'nav.categoryNavigation': 'Category Navigation',
+    'nav.noCategories': 'No Categories',
+    'nav.noCategoriesDesc': 'Categories will appear automatically after importing bookmarks',
+    'nav.totalCategories': 'Total {count} categories',
 
     // Home page
     "home.title": "Import Your Bookmarks",
@@ -136,8 +168,12 @@ const translations: TranslationMap = {
     // Search
     "search.placeholder": "Search bookmarks...",
     "search.allFolders": "All Folders",
-    "search.filteredResults": "Filtered results",
-    "search.allBookmarks": "All bookmarks",
+    "search.filteredResults": "Filtered Results",
+    "search.allBookmarks": "All Bookmarks",
+    
+    // Sidebar
+    "sidebar.categories": "Categories",
+    "sidebar.allBookmarks": "All Bookmarks",
 
     // Messages
     "message.parseError":
@@ -152,9 +188,26 @@ const translations: TranslationMap = {
       "Are you sure you want to clear all bookmark data? This action cannot be undone.",
 
     // Buttons
-    "button.confirm": "Confirm",
-    "button.cancel": "Cancel",
-    "button.ok": "OK",
+    'button.confirm': 'Confirm',
+    'button.cancel': 'Cancel',
+    'button.ok': 'OK',
+    'button.chooseFile': 'Choose File',
+    
+    // Upload Modal
+    'upload.title': 'Upload Bookmark File',
+    'upload.description': 'Please upload your bookmark file to start using the bookmark management features',
+    'upload.supportedFormats': 'Supports HTML and JSON format bookmark files',
+
+    // Settings Modal
+    'settings.title': 'Settings',
+    'settings.statistics': 'Statistics',
+    'settings.totalBookmarks': 'Total Bookmarks',
+    'settings.actions': 'Actions',
+    'settings.importData': 'Import Data',
+    'settings.importDataDesc': 'Import new bookmark files',
+    'settings.clearData': 'Clear Data',
+    'settings.clearDataDesc': 'Delete all bookmark data',
+    'settings.version': 'Version',
 
     // View modes
     "view.list": "List",
@@ -164,7 +217,8 @@ const translations: TranslationMap = {
     // Chart
     "chart.bookmarkDistribution": "Bookmark Distribution",
     "chart.bookmarkCount": "Bookmark Count",
-    "chart.saveImage": "Save Image",
+    'chart.saveImage': 'Save Image',
+    'chart.save': 'Save',
     "chart.noData": "No Data Available",
     "chart.noDataDesc":
       "Import some bookmarks to see beautiful distribution charts here",
@@ -219,7 +273,6 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       // 仅在开发期提示即可，避免噪音
       if (process.env.NODE_ENV !== "production") {
-        // eslint-disable-next-line no-console
         console.error("Failed to load language preference:", error);
       }
     }
@@ -233,7 +286,6 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("bookmarkflow-language", language);
     } catch (error) {
       if (process.env.NODE_ENV !== "production") {
-        // eslint-disable-next-line no-console
         console.error("Failed to save language preference:", error);
       }
     }
@@ -244,7 +296,6 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     const raw = dict[key];
     if (!raw) {
       if (process.env.NODE_ENV !== "production") {
-        // eslint-disable-next-line no-console
         console.warn(`Translation missing for key: ${key}`);
       }
       return key;

@@ -12,17 +12,50 @@ interface DistributionChartProps {
 export default function DistributionChart({ bookmarks }: DistributionChartProps) {
   const { t } = useLanguage();
   const chartRef = useRef<HTMLDivElement>(null);
-  const chartInstance = useRef<echarts.ECharts | null>(null);
+  const chartInstanceRef = useRef<any>(null);
+
+  const handleSaveImage = () => {
+    if (chartInstanceRef.current) {
+      const url = chartInstanceRef.current.getDataURL({
+        type: 'png',
+        pixelRatio: 2,
+        backgroundColor: '#fff'
+      });
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `bookmark-distribution-${new Date().getTime()}.png`;
+      link.click();
+    }
+  };
 
   useEffect(() => {
     if (!chartRef.current) return;
 
     // Initialize chart
-    chartInstance.current = echarts.init(chartRef.current);
+    const chart = echarts.init(chartRef.current);
+    chartInstanceRef.current = chart;
+
+    // Helper function to get last folder name
+    const getLastFolderName = (folderPath: string): string => {
+      if (!folderPath) return t('search.allFolders');
+      
+      const segments = folderPath.split('/').filter(Boolean);
+      const uniqueSegments: string[] = [];
+      
+      for (const segment of segments) {
+        if (uniqueSegments.length === 0 || uniqueSegments[uniqueSegments.length - 1] !== segment) {
+          if (!['书签栏', 'Bookmarks Bar', 'Bookmarks', '收藏夹'].includes(segment)) {
+            uniqueSegments.push(segment);
+          }
+        }
+      }
+      
+      return uniqueSegments.length > 0 ? uniqueSegments[uniqueSegments.length - 1] : t('search.allFolders');
+    };
 
     // Prepare data
     const folderStats = bookmarks.reduce((acc, bookmark) => {
-      const folder = bookmark.folder || t('search.allFolders');
+      const folder = getLastFolderName(bookmark.folder || '');
       acc[folder] = (acc[folder] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -32,19 +65,18 @@ export default function DistributionChart({ bookmarks }: DistributionChartProps)
       value
     }));
 
-    const barData = Object.entries(folderStats);
+    // const barData = Object.entries(folderStats); // Reserved for future use
 
     // Chart options
     const option = {
       backgroundColor: 'transparent',
       title: {
         text: t('chart.bookmarkDistribution'),
-        left: 'right',
-        top: '5%',
-        right: '5%',
+        left: window.innerWidth < 768 ? 'center' : '70%',
+        top: window.innerWidth < 768 ? '3%' : '5%',
         textStyle: {
           color: '#1e293b',
-          fontSize: 24,
+          fontSize: window.innerWidth < 768 ? 16 : 24,
           fontWeight: 'bold'
         }
       },
@@ -72,22 +104,7 @@ export default function DistributionChart({ bookmarks }: DistributionChartProps)
         itemGap: 10
       },
       toolbox: {
-        show: true,
-        orient: 'vertical',
-        right: '5%',
-        top: '15%',
-        feature: {
-          saveAsImage: {
-            show: true,
-            title: t('chart.saveImage'),
-            iconStyle: {
-              borderColor: '#00d4ff'
-            }
-          }
-        },
-        iconStyle: {
-          borderColor: '#e2e8f0'
-        }
+        show: false
       },
       series: [
         {
@@ -119,7 +136,7 @@ export default function DistributionChart({ bookmarks }: DistributionChartProps)
           data: pieData,
           animationType: 'scale',
           animationEasing: 'elasticOut',
-          animationDelay: function (idx: number) {
+          animationDelay: function (_idx: number) {
             return Math.random() * 200;
           }
         }
@@ -131,43 +148,52 @@ export default function DistributionChart({ bookmarks }: DistributionChartProps)
       ]
     };
 
-    chartInstance.current.setOption(option);
+    chartInstanceRef.current.setOption(option);
 
     // Handle resize
     const handleResize = () => {
-      chartInstance.current?.resize();
+      chartInstanceRef.current?.resize();
     };
 
     window.addEventListener('resize', handleResize);
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      chartInstance.current?.dispose();
+      chartInstanceRef.current?.dispose();
     };
   }, [bookmarks, t]);
 
   if (bookmarks.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-96 text-center">
-        <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center neon-primary mb-6">
-          <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-surface pt-16 sm:pt-20 pb-4 sm:pb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="glass rounded-xl sm:rounded-2xl border border-border/50 p-4 sm:p-8 mb-4 sm:mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-4 sm:space-y-0">
+              <div className="flex items-center space-x-3 sm:space-x-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center neon-primary">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h1 className="text-lg sm:text-2xl font-bold text-foreground">{t('chart.title')}</h1>
+                  <p className="text-sm sm:text-base text-foreground/60">{t('chart.subtitle')}</p>
+                </div>
+              </div>
+              <p className="text-foreground/60 max-w-md">
+                {t('chart.noDataDesc')}
+              </p>
+            </div>
+          </div>
         </div>
-        <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-          {t('chart.noData')}
-        </h2>
-        <p className="text-foreground/60 max-w-md">
-          {t('chart.noDataDesc')}
-        </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto h-full">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div className="glass rounded-xl p-6 neon-primary">
           <div className="flex items-center justify-between">
             <div>
@@ -216,11 +242,25 @@ export default function DistributionChart({ bookmarks }: DistributionChartProps)
       </div>
 
       {/* Chart Container */}
-      <div className="glass rounded-xl p-6">
+      <div className="glass rounded-xl p-6 neon-primary">
+        {/* Chart Header with Title and Save Button */}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-foreground">{t('chart.bookmarkDistribution')}</h2>
+          <button
+            onClick={handleSaveImage}
+            className="px-3 py-2 sm:px-4 sm:py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-lg font-medium transition-all duration-200 hover:shadow-lg hover:scale-105 neon-primary flex items-center space-x-1 sm:space-x-2 text-sm sm:text-base"
+          >
+            <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span className="hidden sm:inline">{t('chart.saveImage')}</span>
+            <span className="sm:hidden">{t('chart.save')}</span>
+          </button>
+        </div>
         <div 
           ref={chartRef}
-          className="w-full h-96"
-          style={{ minHeight: '400px' }}
+          className="w-full"
+          style={{ height: '500px', maxHeight: 'calc(100vh - 300px)' }}
         />
       </div>
     </div>

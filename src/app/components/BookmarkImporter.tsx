@@ -153,7 +153,6 @@ export default function BookmarkImporter({
         });
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error("Error parsing bookmark file:", error);
       throw new Error(t("message.parseError"));
     }
