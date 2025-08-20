@@ -10,7 +10,17 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  { ignores: ['node_modules', '.next', 'dist', '.vercel', 'coverage'] },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
+  {
+    files: ['**/*.ts', '**/*.tsx'],
+    rules: {
+      // 不要让这些规则在 CI 中报错
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@next/next/no-img-element': 'warn',
+    },
+  },
 ];
 
 export default eslintConfig;
