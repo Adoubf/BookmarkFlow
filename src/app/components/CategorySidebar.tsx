@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { cleanFolderPath } from '../utils/bookmarkUtils';
 
 interface FolderNode {
   name: string;
@@ -30,25 +31,6 @@ export default function CategorySidebar({ bookmarks, selectedFolder, onFolderCha
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   
   // Extract and clean folders from bookmarks
-  const cleanFolderPath = (path: string): string => {
-    if (!path) return '';
-    
-    // Remove duplicate segments and clean path
-    const segments = path.split('/').filter(Boolean);
-    const uniqueSegments: string[] = [];
-    
-    for (const segment of segments) {
-      // Skip if it's the same as the previous segment (removes duplicates)
-      if (uniqueSegments.length === 0 || uniqueSegments[uniqueSegments.length - 1] !== segment) {
-        // Skip common root folders like "书签栏", "Bookmarks Bar", etc.
-        if (!['书签栏', 'Bookmarks Bar', 'Bookmarks', '收藏夹'].includes(segment)) {
-          uniqueSegments.push(segment);
-        }
-      }
-    }
-    
-    return uniqueSegments.join('/');
-  };
   
   const folders = [...new Set(
     bookmarks

@@ -12,7 +12,6 @@ interface SearchBarProps {
 
 export default function SearchBar({ folders, selectedFolder, onFolderChange, searchQuery }: SearchBarProps) {
   const { t } = useLanguage();
-  // const [isDropdownOpen, setIsDropdownOpen] = React.useState(false); // Reserved for future use
   
   const buildFolderTree = (folderPaths: string[]) => {
     const tree: any[] = [];
@@ -66,11 +65,6 @@ export default function SearchBar({ folders, selectedFolder, onFolderChange, sea
     return tree;
   };
 
-  // const getLastFolderName = (folderPath: string): string => {
-  //   if (!folderPath) return '';
-  //   const segments = folderPath.split('/').filter(Boolean);
-  //   return segments[segments.length - 1] || '';
-  // };
   
   const folderTree = buildFolderTree(folders);
   const [showAllCategories, setShowAllCategories] = React.useState(false);

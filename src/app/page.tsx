@@ -11,6 +11,7 @@ import { ConfirmModal } from "./components/Modal";
 import UploadModal from "./components/UploadModal";
 import SettingsModal from "./components/SettingsModal";
 import { useLanguage } from "./contexts/LanguageContext";
+import { cleanFolderPath, parseHtmlBookmarks, parseJsonBookmarks, removeDuplicateBookmarks } from "./utils/bookmarkUtils";
 
 // Dynamic imports for better performance
 import dynamic from 'next/dynamic';
@@ -82,23 +83,6 @@ export default function Home() {
   }, [bookmarks, viewMode]);
 
 
-  // Helper function to clean folder paths
-  const cleanFolderPath = (path: string): string => {
-    if (!path) return '';
-    
-    const segments = path.split('/').filter(Boolean);
-    const uniqueSegments: string[] = [];
-    
-    for (const segment of segments) {
-      if (uniqueSegments.length === 0 || uniqueSegments[uniqueSegments.length - 1] !== segment) {
-        if (!['书签栏', 'Bookmarks Bar', 'Bookmarks', '收藏夹'].includes(segment)) {
-          uniqueSegments.push(segment);
-        }
-      }
-    }
-    
-    return uniqueSegments.join('/');
-  };
 
   const filteredBookmarks = bookmarks.filter(bookmark => {
     const matchesSearch = bookmark.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -117,10 +101,6 @@ export default function Home() {
   });
 
   const folders = Array.from(new Set(bookmarks.map(b => b.folder).filter(Boolean))) as string[];
-  // const bookmarkCounts = folders.reduce((acc, folder) => {
-  //   acc[folder] = bookmarks.filter(b => b.folder === folder).length;
-  //   return acc;
-  // }, {} as Record<string, number>); // Reserved for future use
 
   // Auto-switch to bookmarks page when bookmarks are imported
   const handleBookmarksImported = (importedBookmarks: Bookmark[]) => {
@@ -137,68 +117,16 @@ export default function Home() {
       let parsedBookmarks: Bookmark[] = [];
       
       if (file.name.endsWith('.html')) {
-        // Parse HTML bookmark file
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(text, 'text/html');
-        const links = doc.querySelectorAll('a[href]');
-        
-        parsedBookmarks = Array.from(links).map((link, index) => {
-          const href = link.getAttribute('href') || '';
-          const title = link.textContent || href;
-          
-          // Build folder path from nested structure
-          let folderPath = 'Imported';
-          let currentElement = link.parentElement;
-          const folderParts: string[] = [];
-          
-          // Traverse up to find folder hierarchy
-          while (currentElement) {
-            // Look for H3 elements that represent folder names
-            const h3Elements = currentElement.querySelectorAll('h3');
-            h3Elements.forEach(h3 => {
-              if (h3.textContent && h3.textContent.trim()) {
-                const folderName = h3.textContent.trim();
-                // Skip common root folder names
-                if (!['书签栏', 'Bookmarks Bar', 'Bookmarks', '收藏夹'].includes(folderName)) {
-                  if (!folderParts.includes(folderName)) {
-                    folderParts.unshift(folderName);
-                  }
-                }
-              }
-            });
-            currentElement = currentElement.parentElement;
-          }
-          
-          if (folderParts.length > 0) {
-            folderPath = folderParts.join('/');
-          }
-          
-          return {
-            id: `imported-${Date.now()}-${index}`,
-            title: title.trim(),
-            url: href,
-            folder: folderPath,
-            dateAdded: new Date()
-          };
-        }).filter(bookmark => bookmark.url && bookmark.url.startsWith('http'));
+        // Parse HTML bookmark file using unified function
+        parsedBookmarks = parseHtmlBookmarks(text);
       } else if (file.name.endsWith('.json')) {
-        // Parse JSON bookmark file
-        const jsonData = JSON.parse(text);
-        if (Array.isArray(jsonData)) {
-          parsedBookmarks = jsonData.map((item, index) => ({
-            id: item.id || `imported-${Date.now()}-${index}`,
-            title: item.title || item.name || item.url,
-            url: item.url || item.href,
-            folder: item.folder || item.category || 'Imported',
-            dateAdded: item.dateAdded ? new Date(item.dateAdded) : new Date()
-          })).filter(bookmark => bookmark.url);
-        }
+        // Parse JSON bookmark file using unified function
+        parsedBookmarks = parseJsonBookmarks(text);
       }
       
       if (parsedBookmarks.length > 0) {
-        // Remove duplicates
-        const existingUrls = new Set(bookmarks.map(b => b.url));
-        const newBookmarks = parsedBookmarks.filter(b => !existingUrls.has(b.url));
+        // Remove duplicates using unified function
+        const newBookmarks = removeDuplicateBookmarks(parsedBookmarks, bookmarks);
         
         if (newBookmarks.length > 0) {
           const updatedBookmarks = [...bookmarks, ...newBookmarks];

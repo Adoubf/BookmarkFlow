@@ -116,7 +116,7 @@ export default function SettingsModal({
         {/* Footer */}
         <div className="px-6 py-4 border-t border-border/30 bg-surface/20 rounded-b-2xl">
           <div className="text-xs text-foreground/50 text-center">
-            {t('settings.version')} 1.0.0
+            {t('settings.version')} {process.env.NEXT_PUBLIC_APP_VERSION}
           </div>
         </div>
       </div>

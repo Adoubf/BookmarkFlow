@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Bookmark } from "../page";
 import FaviconImage from "./FaviconImage";
+import { getLastFolderName } from "../utils/bookmarkUtils";
 
 interface BookmarkGridProps {
   bookmarks: Bookmark[];
@@ -26,24 +27,6 @@ function BookmarkCard({ bookmark, onDelete, viewMode = 'list' }: BookmarkCardPro
     }
   };
 
-  const getLastFolderName = (folderPath: string): string => {
-    if (!folderPath) return '';
-    
-    // Clean and get last segment
-    const segments = folderPath.split('/').filter(Boolean);
-    const uniqueSegments: string[] = [];
-    
-    for (const segment of segments) {
-      // Skip duplicates and root folders
-      if (uniqueSegments.length === 0 || uniqueSegments[uniqueSegments.length - 1] !== segment) {
-        if (!['书签栏', 'Bookmarks Bar', 'Bookmarks', '收藏夹'].includes(segment)) {
-          uniqueSegments.push(segment);
-        }
-      }
-    }
-    
-    return uniqueSegments.length > 0 ? uniqueSegments[uniqueSegments.length - 1] : '';
-  };
 
   const handleClick = () => {
     window.open(bookmark.url, '_blank', 'noopener,noreferrer');

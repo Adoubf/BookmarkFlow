@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import * as echarts from 'echarts';
 import { Bookmark } from '../page';
 import { useLanguage } from '../contexts/LanguageContext';
+import { getLastFolderName } from '../utils/bookmarkUtils';
 
 interface DistributionChartProps {
   bookmarks: Bookmark[];
@@ -35,27 +36,10 @@ export default function DistributionChart({ bookmarks }: DistributionChartProps)
     const chart = echarts.init(chartRef.current);
     chartInstanceRef.current = chart;
 
-    // Helper function to get last folder name
-    const getLastFolderName = (folderPath: string): string => {
-      if (!folderPath) return t('search.allFolders');
-      
-      const segments = folderPath.split('/').filter(Boolean);
-      const uniqueSegments: string[] = [];
-      
-      for (const segment of segments) {
-        if (uniqueSegments.length === 0 || uniqueSegments[uniqueSegments.length - 1] !== segment) {
-          if (!['书签栏', 'Bookmarks Bar', 'Bookmarks', '收藏夹'].includes(segment)) {
-            uniqueSegments.push(segment);
-          }
-        }
-      }
-      
-      return uniqueSegments.length > 0 ? uniqueSegments[uniqueSegments.length - 1] : t('search.allFolders');
-    };
 
     // Prepare data
     const folderStats = bookmarks.reduce((acc, bookmark) => {
-      const folder = getLastFolderName(bookmark.folder || '');
+      const folder = getLastFolderName(bookmark.folder || '') || t('search.allFolders');
       acc[folder] = (acc[folder] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -65,7 +49,6 @@ export default function DistributionChart({ bookmarks }: DistributionChartProps)
       value
     }));
 
-    // const barData = Object.entries(folderStats); // Reserved for future use
 
     // Chart options
     const option = {

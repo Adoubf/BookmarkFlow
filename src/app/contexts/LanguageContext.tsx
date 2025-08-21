@@ -57,6 +57,8 @@ const translations: TranslationMap = {
     "search.allFolders": "所有的分类",
     "search.filteredResults": "过滤后的结果",
     "search.allBookmarks": "所有的书签",
+    "search.showLess": "收起",
+    "search.more": "更多",
     
     // Sidebar
     "sidebar.categories": "分类导航",
@@ -170,6 +172,8 @@ const translations: TranslationMap = {
     "search.allFolders": "All Folders",
     "search.filteredResults": "Filtered Results",
     "search.allBookmarks": "All Bookmarks",
+    "search.showLess": "Show Less",
+    "search.more": "more",
     
     // Sidebar
     "sidebar.categories": "Categories",

@@ -4,6 +4,11 @@ import { useState, useRef } from "react";
 import { Bookmark } from "../page";
 import { useLanguage } from "../contexts/LanguageContext";
 import { AlertModal } from "./Modal";
+import { 
+  parseHtmlBookmarks, 
+  parseJsonBookmarks, 
+  removeDuplicateBookmarks
+} from "../utils/bookmarkUtils";
 
 interface BookmarkImporterProps {
   onBookmarksImported: (bookmarks: Bookmark[]) => void;
@@ -27,137 +32,24 @@ export default function BookmarkImporter({
     variant: "default" | "success" | "error";
   }>({ isOpen: false, title: "", message: "", variant: "default" });
 
-  const generateId = () =>
-    Math.random().toString(36).slice(2, 11 /* 9 chars */);
-
-  // -------------------------
-  // 类型与类型守卫
-  // -------------------------
-  type JsonValue = string | number | boolean | null | JsonObject | JsonArray;
-  type JsonObject = { [k: string]: JsonValue };
-  type JsonArray = JsonValue[];
-
-  // Chrome/Edge 书签节点的最小安全子集（我们用到的字段）
-  type BookmarkUrlNode = {
-    type?: string; // 'url'
-    url?: string;
-    name?: string;
-    title?: string;
-    date_added?: string;
-  };
-
-  type BookmarkFolderNode = {
-    name?: string;
-    children?: unknown[];
-  };
-
-  const isRecord = (v: unknown): v is Record<string, unknown> =>
-    typeof v === "object" && v !== null;
-
-  const isUrlNode = (n: unknown): n is BookmarkUrlNode =>
-    isRecord(n) &&
-    (n.type === "url" || typeof n.type === "undefined") && // 有的导出不带 type
-    typeof (n as BookmarkUrlNode).url === "string";
-
-  const hasChildren = (n: unknown): n is BookmarkFolderNode =>
-    isRecord(n) && Array.isArray((n as BookmarkFolderNode).children);
-
   // -------------------------
   // 解析文件
   // -------------------------
   const parseBookmarkFile = async (file: File): Promise<Bookmark[]> => {
     const text = await file.text();
-    const out: Bookmark[] = [];
 
     try {
       if (file.name.toLowerCase().endsWith(".json")) {
         // JSON 格式（Chrome/Edge/通用）
-        const data: unknown = JSON.parse(text);
-
-        const extract = (node: unknown, folder = ""): void => {
-          // 命中 URL 节点
-          if (isUrlNode(node)) {
-            const title =
-              (node.name ?? node.title)?.toString().trim() || "Untitled";
-            const url = node.url!;
-
-            // Chrome 的 date_added 常见为字符串数字
-            const tsStr = node.date_added;
-            const date =
-              typeof tsStr === "string" && /^\d+$/.test(tsStr)
-                ? // 你的原逻辑：/1000（保留）
-                  new Date(parseInt(tsStr, 10) / 1000)
-                : new Date();
-
-            out.push({
-              id: generateId(),
-              title,
-              url,
-              folder: folder || "Imported",
-              dateAdded: date,
-            });
-          }
-
-          // 递归 children
-          if (hasChildren(node)) {
-            const n = node as BookmarkFolderNode & { name?: string };
-            const currentFolder =
-              typeof n.name === "string" && n.name.trim() !== ""
-                ? n.name
-                : folder;
-            n.children!.forEach((child) => extract(child, currentFolder));
-          }
-        };
-
-        // 既兼容 Chrome 的 roots，又兼容通用数组/对象
-        if (isRecord(data) && "roots" in data && isRecord((data as any).roots)) {
-          const roots = (data as { roots: Record<string, unknown> }).roots;
-          Object.values(roots).forEach((root) => extract(root));
-        } else if (Array.isArray(data)) {
-          (data as unknown[]).forEach((item) => extract(item));
-        } else {
-          extract(data);
-        }
+        return parseJsonBookmarks(text);
       } else {
         // HTML 格式（Firefox/Safari 等）
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(text, "text/html");
-        const links = doc.querySelectorAll("a[href]");
-
-        links.forEach((link) => {
-          const url = link.getAttribute("href");
-          const title = link.textContent?.trim() || "Untitled";
-
-          if (url && url.startsWith("http")) {
-            // 尝试从 DOM 结构回溯目录名
-            let folder = "Imported";
-            let parent: HTMLElement | null = link.parentElement;
-            while (parent) {
-              const folderName =
-                parent.querySelector("h3")?.textContent?.trim();
-              if (folderName && folderName !== title) {
-                folder = folderName;
-                break;
-              }
-              parent = parent.parentElement;
-            }
-
-            out.push({
-              id: generateId(),
-              title,
-              url,
-              folder,
-              dateAdded: new Date(),
-            });
-          }
-        });
+        return parseHtmlBookmarks(text);
       }
     } catch (error) {
       console.error("Error parsing bookmark file:", error);
       throw new Error(t("message.parseError"));
     }
-
-    return out;
   };
 
   const handleFileSelect = async (file: File) => {
@@ -171,8 +63,7 @@ export default function BookmarkImporter({
       }
 
       // 去重（按 URL）
-      const existingUrls = new Set(existingBookmarks.map((b) => b.url));
-      const newBookmarks = parsed.filter((b) => !existingUrls.has(b.url));
+      const newBookmarks = removeDuplicateBookmarks(parsed, existingBookmarks);
 
       if (newBookmarks.length === 0) {
         setAlertModal({
